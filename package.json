@@ -17,7 +17,6 @@
     "framer-motion": "^12.38.0",
     "google-libphonenumber": "^3.2.44",
     "hls.js": "^1.6.16",
-    "lightningcss-android-arm64": "^1.32.0",
     "lucide-react": "^1.14.0",
     "maplibre-gl": "^5.24.0",
     "next": "16.2.6",
@@ -42,5 +41,8 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^2.1.9"
+  },
+  "optionalDependencies": {
+    "lightningcss-android-arm64": "^1.32.0"
   }
 }
