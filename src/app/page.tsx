@@ -53,7 +53,7 @@ const UptimeClock = () => {
     }, 1000);
     return () => clearInterval(iv);
   }, []);
-  return <span className="hidden lg:inline">UPTIME: <span className="text-[var(--gold-primary)]">{uptime}</span></span>;
+  return <span className="hidden lg:inline">TEMPO ATIVO: <span className="text-[var(--gold-primary)]">{uptime}</span></span>;
 };
 
 const ZuluClock = () => {
@@ -467,7 +467,7 @@ export default function Dashboard() {
                 className="overflow-hidden whitespace-nowrap"
               >
                 <p className="text-[10px] md:text-[11px] font-mono tracking-[0.5em] text-[var(--gold-primary)]" style={{ opacity: 0.8 }}>
-                  GLOBAL INTELLIGENCE PLATFORM
+                  PLATAFORMA DE INTELIGÊNCIA REGIONAL
                 </p>
               </motion.div>
             </div>
@@ -488,10 +488,10 @@ export default function Dashboard() {
               {/* Status messages — cycling */}
               <div className="mt-3 h-4 flex items-center justify-center">
                 {[
-                  { text: 'ESTABLISHING SECURE CONNECTION...', delay: 0.5 },
-                  { text: 'INITIALIZING FEEDS...', delay: 1.1 },
-                  { text: 'CALIBRATING SENSORS...', delay: 1.7 },
-                  { text: 'SYSTEM READY', delay: 2.2 },
+                  { text: 'ESTABELECENDO CONEXÃO SEGURA...', delay: 0.5 },
+                  { text: 'INICIALIZANDO DADOS DO MAPA...', delay: 1.1 },
+                  { text: 'CALIBRANDO ROTEAMENTO LOCAL...', delay: 1.7 },
+                  { text: 'SISTEMA PRONTO', delay: 2.2 },
                 ].map((stage, i) => (
                   <motion.span
                     key={i}
