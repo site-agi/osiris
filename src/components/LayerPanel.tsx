@@ -24,94 +24,24 @@ const LAYER_GROUPS = [
     icon: Anchor,
     layers: [
       { key: 'barra_comercio', label: 'Comércio Local', dataKey: 'comercio_barra' },
+      { key: 'barra_imoveis', label: 'Imóveis & Terrenos', dataKey: 'imoveis_barra' },
     ],
   },
   {
-    label: 'SDK',
-    fullLabel: 'OSIRIS SDK',
-    icon: Database,
-    layers: [
-      { key: 'sdk_sea', label: 'Maritime Lines', dataKey: 'sdk_entities' },
-    ],
-  },
-  {
-    label: 'AVIATION',
-    fullLabel: 'AVIATION',
-    icon: Plane,
-    layers: [
-      { key: 'flights', label: 'Commercial', dataKey: 'commercial_flights' },
-      { key: 'private', label: 'Private', dataKey: 'private_flights' },
-      { key: 'jets', label: 'Private Jets', dataKey: 'private_jets' },
-      { key: 'military', label: 'Military', dataKey: 'military_flights' },
-    ],
-  },
-  {
-    label: 'MARITIME',
-    fullLabel: 'MARITIME',
-    icon: Ship,
-    layers: [
-      { key: 'maritime', label: 'Maritime / Naval', dataKey: 'maritime_ships,maritime_ports,maritime_chokepoints' },
-    ],
-  },
-  {
-    label: 'SPACE',
-    fullLabel: 'SPACE TRACKING',
-    icon: Satellite,
-    layers: [
-      { key: 'satellites', label: 'All Satellites', dataKey: 'satellites' },
-      { key: 'sat_comms', label: 'Starlink / Comms', dataKey: 'satellites', catKey: 'comms' },
-      { key: 'sat_military', label: 'Military / Intel', dataKey: 'satellites', catKey: 'military' },
-      { key: 'sat_navigation', label: 'GPS / Navigation', dataKey: 'satellites', catKey: 'navigation' },
-      { key: 'sat_earth', label: 'Earth Observation', dataKey: 'satellites', catKey: 'earth_obs' },
-      { key: 'sat_science', label: 'Stations / Telescopes', dataKey: 'satellites', catKey: 'science' },
-    ],
-  },
-  {
-    label: 'SURVEIL',
-    fullLabel: 'SURVEILLANCE',
-    icon: Camera,
-    layers: [
-      { key: 'cctv', label: 'CCTV Cameras', dataKey: 'cameras' },
-      { key: 'live_news', label: 'Live News Feeds', dataKey: 'live_feeds' },
-      { key: 'news_intel', label: 'SIGINT News', dataKey: 'sigint_news' },
-    ],
-  },
-  {
-    label: 'HAZARD',
-    fullLabel: 'NATURAL HAZARDS',
+    label: 'WEATHER',
+    fullLabel: 'CLIMA & MEIO AMBIENTE',
     icon: CloudLightning,
     layers: [
-      { key: 'earthquakes', label: 'Earthquakes', dataKey: 'earthquakes' },
-      { key: 'fires', label: 'Active Fires', dataKey: 'fires' },
-      { key: 'weather', label: 'Severe Weather', dataKey: 'weather_events' },
-    ],
-  },
-  {
-    label: 'THREAT',
-    fullLabel: 'THREATS & INTEL',
-    icon: AlertTriangle,
-    layers: [
-      { key: 'infrastructure', label: 'Nuclear Facilities', dataKey: 'infrastructure' },
-      { key: 'global_incidents', label: 'Global Incidents', dataKey: 'gdelt' },
-      { key: 'gps_jamming', label: 'GPS Jamming', dataKey: 'gps_jamming' },
-    ],
-  },
-  {
-    label: 'NETWORK',
-    fullLabel: 'NETWORK INTEL',
-    icon: Network,
-    layers: [
-      { key: 'malware', label: 'Live Malware', dataKey: 'malware_threats' },
-      { key: 'cyber_attacks', label: 'Live Attacks', dataKey: 'cyber_attacks' },
+      { key: 'weather', label: 'Previsão do Tempo', dataKey: 'weather_events' },
     ],
   },
   {
     label: 'DISPLAY',
-    fullLabel: 'DISPLAY',
+    fullLabel: 'VISUALIZAÇÃO',
     icon: Sun,
     layers: [
-      { key: 'day_night', label: 'Day / Night Cycle', dataKey: '' },
-      { key: 'terrain_3d', label: '3D Terrain & Buildings', dataKey: '' },
+      { key: 'day_night', label: 'Ciclo Dia / Noite', dataKey: '' },
+      { key: 'terrain_3d', label: 'Terreno 3D', dataKey: '' },
     ],
   },
 ];

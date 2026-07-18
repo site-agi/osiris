@@ -131,37 +131,10 @@ export default function Dashboard() {
   // ── DEFAULT: Most layers OFF — fast initial load ──
   const [activeLayers, setActiveLayers] = useState({
     barra_comercio: true,
-    flights: false,
-    private: false,
-    jets: false,
-    military: false,
-    maritime: true,
-    satellites: false,
-    sat_comms: false,
-    sat_military: false,
-    sat_navigation: false,
-    sat_earth: false,
-    sat_science: false,
-    balloons: false,
-    cctv: true,
-    live_news: true,
-    news_intel: true,
-    earthquakes: true,
-    fires: false,
-    weather: false,
-    radiation: false,
-    infrastructure: false,
-    global_incidents: true,
-    war_alerts: false,
-    gps_jamming: false,
+    barra_imoveis: true,
+    weather: true,
     day_night: true,
-    cables: true,
-    sdk_sea: true,
-    sdk_air: true,
-    sdk_naval: true,
     terrain_3d: false,
-    malware: false,
-    cyber_attacks: false,
   });
   const [liveFeedUrl, setLiveFeedUrl] = useState<string | null>(null);
   const [liveFeedName, setLiveFeedName] = useState('');
@@ -345,241 +318,20 @@ export default function Dashboard() {
 
   // ── PROGRESSIVE DATA LOADING (request-optimized) ──
   useEffect(() => {
-    // Priority 1: Core feeds (always needed for panels)
-    const eqUrl = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson';
-    const eqTransform = (data: any) => ({ earthquakes: (data.features || []).map((f: any) => ({ id: f.id, lat: f.geometry?.coordinates?.[1] || 0, lng: f.geometry?.coordinates?.[0] || 0, depth: f.geometry?.coordinates?.[2] || 0, magnitude: f.properties?.mag, place: f.properties?.place, time: f.properties?.time, url: f.properties?.url, tsunami: f.properties?.tsunami, type: f.properties?.type, felt: f.properties?.felt, alert: f.properties?.alert })) });
-    fetchEndpoint(eqUrl, eqTransform);
-    fetchEndpoint('/api/news');
-    const marketTimer = setTimeout(() => fetchEndpoint('/api/markets', d => ({ markets: d })), 800);
-
-    // Priority 2: Space Weather (needed for MarketsPanel)
-    const spaceTimer = setTimeout(async () => {
-      try {
-        const r = await fetch('/api/space-weather');
-        if (r.ok) setSpaceWeather(await r.json());
-      } catch (e) { console.warn('[OSIRIS] Suppressed error:', e instanceof Error ? e.message : e); }
-    }, 5000);
-
-    // Polling — OPTIMIZED intervals to minimize edge requests
-    const intervals = [
-      setInterval(() => fetchEndpoint(eqUrl, eqTransform), 900000),  // 15 min (was 5)
-      setInterval(() => fetchEndpoint('/api/news'), 1800000),        // 30 min (was 10)
-      setInterval(() => fetchEndpoint('/api/markets', d => ({ markets: d })), 900000), // 15 min (was 5)
-    ];
-    return () => {
-      clearTimeout(marketTimer);
-      clearTimeout(spaceTimer);
-      intervals.forEach(clearInterval);
-    };
+    fetchEndpoint('/api/weather', d => ({ weather_events: d.events }));
   }, [fetchEndpoint]);
 
   // ── LAYER-AWARE DATA LOADING — only fetch when layer is toggled ON ──
   const layerFetchedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-
-    // Flights
-    if (activeLayers.flights || activeLayers.military || activeLayers.jets || activeLayers.private) {
-      if (!layerFetchedRef.current.has('flights')) {
-        fetchEndpoint('/api/flights');
-        layerFetchedRef.current.add('flights');
-      }
-    }
-    // Satellites (any satellite sub-layer triggers fetch)
-    const anySatLayer = activeLayers.satellites || activeLayers.sat_comms || activeLayers.sat_military || activeLayers.sat_navigation || activeLayers.sat_earth || activeLayers.sat_science;
-    if (anySatLayer && !layerFetchedRef.current.has('satellites')) {
-      fetchEndpoint('/api/satellites');
-      layerFetchedRef.current.add('satellites');
-    }
-    // Fires
-    if (activeLayers.fires && !layerFetchedRef.current.has('fires')) {
-      fetchEndpoint('/api/fires');
-      layerFetchedRef.current.add('fires');
-    }
-    // CCTV
-    if (activeLayers.cctv && !layerFetchedRef.current.has('cctv')) {
-      fetchEndpoint(`/api/cctv?region=all&_t=${Date.now()}`);
-      layerFetchedRef.current.add('cctv');
-    }
-    // Maritime
-    if (activeLayers.maritime && !layerFetchedRef.current.has('maritime')) {
-      fetchEndpoint('/api/maritime', d => ({ maritime_ports: d.ports, maritime_chokepoints: d.chokepoints, maritime_ships: d.ships }));
-      layerFetchedRef.current.add('maritime');
-    }
-    // Balloons
-    if (activeLayers.balloons && !layerFetchedRef.current.has('balloons')) {
-      fetchEndpoint('/api/balloons', d => ({ balloons: d.balloons }));
-      layerFetchedRef.current.add('balloons');
-    }
-    // Radiation
-    if (activeLayers.radiation && !layerFetchedRef.current.has('radiation')) {
-      fetchEndpoint('/api/radiation', d => ({ radiation: d.stations }));
-      layerFetchedRef.current.add('radiation');
-    }
-    // Live News
-    if (activeLayers.live_news && !layerFetchedRef.current.has('live_news')) {
-      fetchEndpoint('/api/live-news', d => ({ live_feeds: d.feeds }));
-      layerFetchedRef.current.add('live_news');
-    }
     // Weather
     if (activeLayers.weather && !layerFetchedRef.current.has('weather')) {
       fetchEndpoint('/api/weather', d => ({ weather_events: d.events }));
       layerFetchedRef.current.add('weather');
     }
-    // Infrastructure
-    if (activeLayers.infrastructure && !layerFetchedRef.current.has('infrastructure')) {
-      fetchEndpoint('/api/infrastructure', d => ({ infrastructure: d.infrastructure }));
-      layerFetchedRef.current.add('infrastructure');
-    }
-    // Global Incidents (GDELT)
-    if (activeLayers.global_incidents && !layerFetchedRef.current.has('gdelt')) {
-      fetchEndpoint('/api/gdelt', d => ({ gdelt: d.events }));
-      layerFetchedRef.current.add('gdelt');
-    }
-
-    // Submarine Cables
-    if (activeLayers.cables && !layerFetchedRef.current.has('cables')) {
-      (async () => {
-        try {
-          const ts = Date.now();
-      const res = await fetch(`/data/submarine-cables.json?v=${ts}`);
-          if (res.ok) {
-             const cablesData = await res.json();
-             dataRef.current = { ...dataRef.current, submarine_cables: cablesData.features };
-             setDataVersion(v => v + 1);
-          }
-        } catch (e) { console.warn('Cables fetch failed'); }
-      })();
-      layerFetchedRef.current.add('cables');
-    }
-
-
-    // Live Malware (abuse.ch)
-    if (activeLayers.malware && !layerFetchedRef.current.has('malware')) {
-      fetchEndpoint('/api/malware', d => ({ malware_threats: d.threats }));
-      layerFetchedRef.current.add('malware');
-    }
-
-    // Live Cyber Attacks (animated arcs)
-    if ((activeLayers as any).cyber_attacks && !layerFetchedRef.current.has('cyber_attacks')) {
-      fetchEndpoint('/api/cyber-attacks', d => ({ cyber_attacks: d.attacks }));
-      layerFetchedRef.current.add('cyber_attacks');
-    }
-
-
-  }, [activeLayers]);
-
-  // ── LAYER-AWARE POLLING — only poll data for active layers ──
-  useEffect(() => {
-    const intervals: ReturnType<typeof setInterval>[] = [];
-    if (activeLayers.flights || activeLayers.military || activeLayers.jets || activeLayers.private) {
-      intervals.push(setInterval(() => fetchEndpoint('/api/flights'), 300000)); // 5 min (was 2 min)
-    }
-
-    if (activeLayers.balloons) {
-      intervals.push(setInterval(() => fetchEndpoint('/api/balloons', d => ({ balloons: d.balloons })), 300000)); // 5m
-    }
-    if (activeLayers.radiation) {
-      intervals.push(setInterval(() => fetchEndpoint('/api/radiation', d => ({ radiation: d.stations })), 300000)); // 5m
-    }
-    if (activeLayers.maritime) {
-      intervals.push(setInterval(() => fetchEndpoint('/api/maritime', d => ({ maritime_ports: d.ports, maritime_chokepoints: d.chokepoints, maritime_ships: d.ships })), 10000)); // 10s
-    }
-    if ((activeLayers as any).cyber_attacks) {
-      intervals.push(setInterval(() => {
-        layerFetchedRef.current.delete('cyber_attacks');
-        fetchEndpoint('/api/cyber-attacks', d => ({ cyber_attacks: d.attacks }));
-        layerFetchedRef.current.add('cyber_attacks');
-      }, 10000)); // 10s — rapid refresh
-    }
-    return () => intervals.forEach(clearInterval);
   }, [activeLayers, fetchEndpoint]);
 
-  // CCTV: loaded once on layer toggle via layerFetchedRef (no viewport polling)
-
-  // Reactive layer fetch: handled by layerFetchedRef above (no duplicate)
-
-  // ── OSIRIS SDK — Intelligence Fusion Layer ──
-  // Produces node coordinates for the SDK network mesh visualization.
-  // Does NOT duplicate existing layer visuals — SDK layer is LINES ONLY.
-  // Cameras are excluded — they have their own dedicated layer.
-  useEffect(() => {
-    const anyActive = activeLayers.sdk_sea || activeLayers.sdk_air || activeLayers.sdk_naval;
-    if (!anyActive) {
-      dataRef.current = { ...dataRef.current, sdk_entities: [] };
-      return;
-    }
-
-    const sdkEntities: any[] = [];
-
-    // Air domain (nodes only — no visual duplication)
-    const allFlights = [
-      ...(data.commercial_flights || []),
-      ...(data.private_flights || []),
-      ...(data.private_jets || []),
-      ...(data.military_flights || []),
-    ];
-    // Sample flights to keep it clean (every Nth)
-    const flightStep = Math.max(1, Math.floor(allFlights.length / 60));
-    for (let i = 0; i < allFlights.length; i += flightStep) {
-      const f = allFlights[i];
-      if (!f.lat || !f.lng) continue;
-      sdkEntities.push({
-        type: 'Feature', geometry: { type: 'Point', coordinates: [f.lng, f.lat] },
-        properties: { domain: 'AIR', name: f.callsign?.trim() || 'TRACK', source: 'ADS-B / OpenSky' },
-      });
-    }
-
-    // Sea domain
-    const ships = data.maritime_ships || [];
-    const shipStep = Math.max(1, Math.floor(ships.length / 60));
-    for (let i = 0; i < ships.length; i += shipStep) {
-      const s = ships[i];
-      if (!s.lat || !s.lng) continue;
-      sdkEntities.push({
-        type: 'Feature', geometry: { type: 'Point', coordinates: [s.lng, s.lat] },
-        properties: { domain: 'SEA', name: s.name || `MMSI-${s.mmsi}`, source: 'AIS Stream' },
-      });
-    }
-
-    // Events — Earthquakes
-    if (data.earthquakes?.length) {
-      for (const eq of data.earthquakes) {
-        if (!eq.lat || !eq.lng) continue;
-        sdkEntities.push({
-          type: 'Feature', geometry: { type: 'Point', coordinates: [eq.lng, eq.lat] },
-          properties: { domain: 'LAND', name: `M${eq.magnitude} ${eq.place || ''}`, source: 'USGS' },
-        });
-      }
-    }
-
-    // GDELT events
-    if (data.gdelt?.length) {
-      for (const g of data.gdelt) {
-        if (!g.lat || !g.lng) continue;
-        sdkEntities.push({
-          type: 'Feature', geometry: { type: 'Point', coordinates: [g.lng, g.lat] },
-          properties: { domain: 'INTEL', name: g.name || 'GDELT Event', source: 'GDELT Project' },
-        });
-      }
-    }
-
-    // News intel
-    if (data.news?.length) {
-      for (const n of data.news) {
-        if (!n.coords || n.coords.length < 2) continue;
-        sdkEntities.push({
-          type: 'Feature', geometry: { type: 'Point', coordinates: [n.coords[1], n.coords[0]] },
-          properties: { domain: 'INTEL', name: n.title || 'SIGINT', source: n.source || 'RSS Feed' },
-        });
-      }
-    }
-
-    dataRef.current = { ...dataRef.current, sdk_entities: sdkEntities };
-  }, [dataVersion, activeLayers.sdk_sea, activeLayers.sdk_air, activeLayers.sdk_naval]);
-
-  const totalFlights = useMemo(() => (
-    (data.commercial_flights?.length||0)+(data.private_flights?.length||0)+(data.private_jets?.length||0)+(data.military_flights?.length||0)
-  ), [data.commercial_flights, data.private_flights, data.private_jets, data.military_flights]);
+  const totalFlights = 0;
 
 
   return (
