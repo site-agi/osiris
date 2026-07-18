@@ -154,6 +154,17 @@ export default function Dashboard() {
     dataRef.current.comercio_barra = COMERCIOS_BARRA;
     setDataVersion(v => v + 1);
 
+    // Buscar comércios reais da API do OpenStreetMap
+    fetch('/api/comercio-local')
+      .then(r => r.json())
+      .then(d => {
+        if (d.comercios && d.comercios.length > 0) {
+          dataRef.current.comercio_barra = d.comercios;
+          setDataVersion(v => v + 1);
+        }
+      })
+      .catch(() => { /* silent fallback */ });
+
     // Restore active layers from URL if present
     const p = new URLSearchParams(window.location.search);
     const layers = p.get('layers');

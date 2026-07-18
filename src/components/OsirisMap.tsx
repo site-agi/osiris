@@ -1101,15 +1101,28 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       const p = e.features?.[0]?.properties;
       if (!p) return;
       const coords = (e.features![0].geometry as any).coordinates;
-      const waLink = `https://wa.me/${p.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá, vi o anúncio de ' + p.name + ' no Barra Bahia Revista e gostaria de mais informações.')}`;
+      const isVip = p.isVip === true || p.isVip === 'true';
+      const color = isVip ? '#FFD700' : '#00E5FF';
       
-      popup(coords, `<div style="${pStyle}border:1px solid #FFD70040;max-width:280px;">
-        <div style="color:#FFD700;font-weight:bold;font-size:12px;margin-bottom:2px;letter-spacing:0.05em;">${htmlEsc(p.name)}</div>
-        <div style="color:#00E5FF;font-weight:bold;font-size:9px;margin-bottom:8px;letter-spacing:0.1em;text-transform:uppercase;">${htmlEsc(p.category)}</div>
+      const isAcquisition = p.phone === '+5574991214751' && !isVip;
+      const waLink = `https://wa.me/${p.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+        isAcquisition
+          ? `Olá! Gostaria de cadastrar ou patrocinar o anúncio do estabelecimento ${p.name} no mapa do Barra Bahia Revista.`
+          : `Olá, vi o anúncio de ${p.name} no Barra Bahia Revista e gostaria de mais informações.`
+      )}`;
+      const buttonText = isAcquisition ? '💬 INDIQUE / ANUNCIE AQUI' : '💬 CONTATO WHATSAPP';
+      const buttonBg = isAcquisition ? '#E65100' : '#25D366';
+      const buttonBorder = isAcquisition ? '#BF360C' : '#20BA5A';
+      
+      popup(coords, `<div style="${pStyle}border:1px solid ${color}40;max-width:280px;">
+        <div style="color:${color};font-weight:bold;font-size:12px;margin-bottom:2px;letter-spacing:0.05em;">${htmlEsc(p.name)}</div>
+        <div style="color:#00E5FF;font-weight:bold;font-size:9px;margin-bottom:8px;letter-spacing:0.1em;text-transform:uppercase;">
+          ${isVip ? '⭐ ANUNCIANTE VIP' : htmlEsc(p.category)}
+        </div>
         <div style="font-size:10px;color:#d0d0d0;line-height:1.4;margin-bottom:10px;">${htmlEsc(p.description)}</div>
         <div style="font-size:9px;color:#888;margin-bottom:8px;">📍 ${htmlEsc(p.address)}</div>
-        <a href="${urlSafe(waLink)}" target="_blank" style="${linkStyle}background:#25D366;color:#ffffff;font-weight:bold;text-align:center;width:100%;border:1px solid #20BA5A;box-sizing:border-box;">
-          💬 CONTATO WHATSAPP
+        <a href="${urlSafe(waLink)}" target="_blank" style="${linkStyle}background:${buttonBg};color:#ffffff;font-weight:bold;text-align:center;width:100%;border:1px solid ${buttonBorder};box-sizing:border-box;">
+          ${buttonText}
         </a>
       </div>`);
     });
@@ -1454,7 +1467,8 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
 
   useEffect(() => {
     if (!mapReady) return;
-    setGeo('barra-comercio', activeLayers.barra_comercio ? COMERCIOS_BARRA.map(c => ({
+    const items = data.comercio_barra || COMERCIOS_BARRA;
+    setGeo('barra-comercio', activeLayers.barra_comercio ? items.map((c: any) => ({
       type: 'Feature' as const,
       geometry: { type: 'Point' as const, coordinates: [c.lng, c.lat] },
       properties: {
@@ -1463,10 +1477,11 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         category: c.category,
         address: c.address,
         phone: c.phone,
-        description: c.description
+        description: c.description,
+        isVip: c.isVip ?? false
       }
     })) : []);
-  }, [mapReady, activeLayers.barra_comercio, setGeo]);
+  }, [mapReady, activeLayers.barra_comercio, data.comercio_barra, setGeo]);
 
   useEffect(() => {
     if (!mapReady) return;
