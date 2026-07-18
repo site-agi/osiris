@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback, memo } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { COMERCIOS_BARRA } from '@/lib/comercio-barra';
 
 interface OsirisMapProps {
   data: any;
@@ -181,7 +182,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       createDot(map, 'dot-fire', isGhost ? phantomPurple : '#E65100', 10);
       createDot(map, 'dot-cctv', cameraColor, 10);
 
-      const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','gps-jamming','day-night','cctv','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','sigint-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets', 'sdk-entities', 'sdk-links', 'malware-nodes', 'network-mesh', 'cyber-arcs', 'cyber-heads', 'cyber-impacts'];
+      const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','gps-jamming','day-night','cctv','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','sigint-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets', 'sdk-entities', 'sdk-links', 'malware-nodes', 'network-mesh', 'cyber-arcs', 'cyber-heads', 'cyber-impacts', 'barra-comercio'];
       sources.forEach(s => map.addSource(s, { type: 'geojson', data: EMPTY_FC }));
 
       // Warning icon generator (parameterized — eliminates 3x copy-paste)
@@ -257,6 +258,23 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         'text-field': ['get','name'], 'text-size': 9, 'text-font': ['Open Sans Regular'],
         'text-offset': [0, 1.8], 'text-max-width': 12, 'text-allow-overlap': false,
       }, paint: { 'text-color': cameraColor, 'text-halo-color': '#000000', 'text-halo-width': 1.5, 'text-opacity': 0.8 }});
+
+      // Barra Comercio — glow
+      map.addLayer({ id: 'barra-comercio-glow', type: 'circle', source: 'barra-comercio', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,6, 5,12, 10,20, 14,35],
+        'circle-color': '#FFD700', 'circle-opacity': 0.15, 'circle-blur': 0.8,
+      }});
+      // Barra Comercio — main dot
+      map.addLayer({ id: 'barra-comercio-dots', type: 'circle', source: 'barra-comercio', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,3, 5,5, 10,8, 14,14],
+        'circle-color': '#FFD700', 'circle-opacity': 0.95,
+        'circle-stroke-width': 1.5, 'circle-stroke-color': '#000000', 'circle-stroke-opacity': 0.9,
+      }});
+      // Barra Comercio — label
+      map.addLayer({ id: 'barra-comercio-label', type: 'symbol', source: 'barra-comercio', minzoom: 9, layout: {
+        'text-field': ['get','name'], 'text-size': 9.5, 'text-font': ['Open Sans Regular'],
+        'text-offset': [0, 1.8], 'text-max-width': 12, 'text-allow-overlap': false,
+      }, paint: { 'text-color': '#FFD700', 'text-halo-color': '#000000', 'text-halo-width': 1.5, 'text-opacity': 0.9 }});
 
       // GDELT
 
@@ -1078,6 +1096,26 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       });
     });
 
+    // ── Barra Comercio (opens popup with WhatsApp link) ──
+    map.on('click', 'barra-comercio-dots', e => {
+      const p = e.features?.[0]?.properties;
+      if (!p) return;
+      const coords = (e.features![0].geometry as any).coordinates;
+      const waLink = `https://wa.me/${p.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá, vi o anúncio de ' + p.name + ' no Barra Bahia Revista e gostaria de mais informações.')}`;
+      
+      popup(coords, `<div style="${pStyle}border:1px solid #FFD70040;max-width:280px;">
+        <div style="color:#FFD700;font-weight:bold;font-size:12px;margin-bottom:2px;letter-spacing:0.05em;">${htmlEsc(p.name)}</div>
+        <div style="color:#00E5FF;font-weight:bold;font-size:9px;margin-bottom:8px;letter-spacing:0.1em;text-transform:uppercase;">${htmlEsc(p.category)}</div>
+        <div style="font-size:10px;color:#d0d0d0;line-height:1.4;margin-bottom:10px;">${htmlEsc(p.description)}</div>
+        <div style="font-size:9px;color:#888;margin-bottom:8px;">📍 ${htmlEsc(p.address)}</div>
+        <a href="${urlSafe(waLink)}" target="_blank" style="${linkStyle}background:#25D366;color:#ffffff;font-weight:bold;text-align:center;width:100%;border:1px solid #20BA5A;box-sizing:border-box;">
+          💬 CONTATO WHATSAPP
+        </a>
+      </div>`);
+    });
+    map.on('mouseenter', 'barra-comercio-dots', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'barra-comercio-dots', () => { map.getCanvas().style.cursor = ''; });
+
     return () => { map.remove(); mapRef.current = null; };
   }, []);
 
@@ -1413,6 +1451,22 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     if (!mapReady) return;
     setGeo('live-news', activeLayers.live_news && data.live_feeds ? data.live_feeds.map((f: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [f.lng, f.lat] }, properties: { name: f.name, city: f.city, country: f.country, url: f.url, category: f.category, embed_allowed: f.embed_allowed !== false } })) : []);
   }, [mapReady, data.live_feeds, activeLayers.live_news, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('barra-comercio', activeLayers.barra_comercio ? COMERCIOS_BARRA.map(c => ({
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: [c.lng, c.lat] },
+      properties: {
+        id: c.id,
+        name: c.name,
+        category: c.category,
+        address: c.address,
+        phone: c.phone,
+        description: c.description
+      }
+    })) : []);
+  }, [mapReady, activeLayers.barra_comercio, setGeo]);
 
   useEffect(() => {
     if (!mapReady) return;

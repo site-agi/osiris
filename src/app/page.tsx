@@ -15,6 +15,7 @@ import ViewPresets from '@/components/ViewPresets';
 import KeyboardShortcuts from '@/components/KeyboardShortcuts';
 import GlobalStatusBar from '@/components/GlobalStatusBar';
 import LiveAlerts from '@/components/LiveAlerts';
+import { COMERCIOS_BARRA } from '@/lib/comercio-barra';
 
 const OsirisMap = dynamic(() => import('@/components/OsirisMap'), { ssr: false });
 const LayerPanel = dynamic(() => import('@/components/LayerPanel'));
@@ -129,6 +130,7 @@ export default function Dashboard() {
 
   // ── DEFAULT: Most layers OFF — fast initial load ──
   const [activeLayers, setActiveLayers] = useState({
+    barra_comercio: true,
     flights: false,
     private: false,
     jets: false,
@@ -174,6 +176,10 @@ export default function Dashboard() {
   // On mount: geolocate by IP and fly to user's city (after splash/map init)
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Adicionar dados estáticos do comércio local de Barra
+    dataRef.current.comercio_barra = COMERCIOS_BARRA;
+    setDataVersion(v => v + 1);
 
     // Restore active layers from URL if present
     const p = new URLSearchParams(window.location.search);

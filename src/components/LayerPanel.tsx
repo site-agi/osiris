@@ -19,6 +19,14 @@ interface LayerPanelProps {
 
 const LAYER_GROUPS = [
   {
+    label: 'REGIONAL',
+    fullLabel: 'BARRA DO RIO GRANDE',
+    icon: Anchor,
+    layers: [
+      { key: 'barra_comercio', label: 'Comércio Local', dataKey: 'comercio_barra' },
+    ],
+  },
+  {
     label: 'SDK',
     fullLabel: 'OSIRIS SDK',
     icon: Database,
